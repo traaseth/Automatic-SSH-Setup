@@ -1,0 +1,6 @@
+# host_vars/SG1.yml
+
+# Eksempel: Definer trunk-porter eller VLANer du vil at SG1 skal ha.
+trunk_ports:
+  - name: GigabitEthernet0/1
+  - name: GigabitEthernet0/2

@@ -1,0 +1,32 @@
+---
+# Konfigurer subinterfaces for VLAN (inkl. HSRP) og DHCP-pooler.
+
+- name: Konfigurer VLAN-subinterfaces og HSRP
+  ios_config:
+    lines:
+      - interface GigabitEthernet0/0/1.{{ item.vlan_id }}
+      - encapsulation dot1Q {{ item.vlan_id }}
+      - ip address {{ item.ip }} {{ item.mask }}
+      - standby {{ item.vlan_id }} ip {{ item.hsrp_ip }}
+      - standby {{ item.vlan_id }} priority {{ item.hsrp_priority }}
+      - no shutdown
+  loop: "{{ vlan_interfaces }}"
+  loop_control:
+    label: "{{ item.vlan_id }}"
+  when: vlan_interfaces is defined
+
+- name: Konfigurer DHCP-pooler
+  ios_config:
+    parents: "ip dhcp pool {{ item.name }}"
+    lines:
+      - network {{ item.network }} {{ item.mask }}
+      - default-router {{ item.default_router }}
+      - dns-server {{ item.dns_server }}
+  loop: "{{ dhcp_pools }}"
+  loop_control:
+    label: "{{ item.name }}"
+  when: dhcp_pools is defined
+
+- name: Lagre konfig (startup-config)
+  ios_config:
+    save_when: modified

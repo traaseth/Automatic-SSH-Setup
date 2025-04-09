@@ -1,0 +1,16 @@
+---
+- name: Router config
+  hosts: routers
+  gather_facts: no
+  collections:
+    - cisco.ios
+  roles:
+    - router_config
+
+- name: Switch config
+  hosts: switches
+  gather_facts: no
+  collections:
+    - cisco.ios
+  roles:
+    - switch_config

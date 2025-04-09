@@ -1,0 +1,17 @@
+# host_vars/RG2.yml
+
+vlan_interfaces:
+  - vlan_id: 20
+    ip: 172.16.0.3
+    mask: 255.255.255.0
+    hsrp_ip: 172.16.0.1
+    hsrp_priority: 110
+
+  - vlan_id: 30
+    ip: 172.16.1.3
+    mask: 255.255.255.0
+    hsrp_ip: 172.16.1.1
+    hsrp_priority: 110
+
+# RG2 kan kjøre DHCP redundans, eller være tom.
+dhcp_pools: []

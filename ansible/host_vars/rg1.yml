@@ -1,0 +1,29 @@
+# host_vars/RG1.yml
+
+# VLAN subinterfaces med HSRP og IP-adresse
+vlan_interfaces:
+  - vlan_id: 20
+    ip: 172.16.0.2
+    mask: 255.255.255.0
+    hsrp_ip: 172.16.0.1
+    hsrp_priority: 120
+
+  - vlan_id: 30
+    ip: 172.16.1.2
+    mask: 255.255.255.0
+    hsrp_ip: 172.16.1.1
+    hsrp_priority: 120
+
+# DHCP-pooler for VLAN 20 og 30
+dhcp_pools:
+  - name: VLAN20
+    network: 172.16.0.0
+    mask: 255.255.255.0
+    default_router: 172.16.0.1
+    dns_server: 8.8.8.8
+
+  - name: VLAN30
+    network: 172.16.1.0
+    mask: 255.255.255.0
+    default_router: 172.16.1.1
+    dns_server: 8.8.4.4
