@@ -1,64 +1,120 @@
-This Python script automates the setup of SSH on a Cisco router via serial (console) connection. It handles RSA key generation (including overwrite prompts), sets hostname/domain, configures a local user, enables SSH version 2, and prepares VTY lines for SSH login.
+README – Cisco Switch and Router Initial Configuration Scripts
+==============================================================
 
-⚙️ Requirements
-WSL (Windows Subsystem for Linux) with Ubuntu (https://learn.microsoft.com/en-us/windows/wsl/install)
+These scripts and Ansible playbooks are designed to automate the base configuration
+of Cisco switches and routers via serial connection and Ansible over SSH, enabling
+VLAN, DHCP, and SSH setup for network devices in lab or production settings.
 
-Python 3
+What You Need
+-------------
 
-pyserial installed
-Install with:
+Hardware:
+- A Cisco router and/or switch with console access
+- A serial connection (e.g., USB-to-serial cable or COM port)
 
-bash
-Copy
-Edit
-pip3 install pyserial
+Software:
+- A working Linux system or WSL (Windows Subsystem for Linux)
+  Guide: https://learn.microsoft.com/en-us/windows/wsl/install
+- Python 3
+- PIP (Python package manager)
+- Ansible
+- Ansible Galaxy collection for Cisco IOS:
+    ansible-galaxy collection install cisco.ios
 
-🖥️ How to Use
-Connect your Cisco router to your PC using a serial console cable.
+File Overview
+-------------
 
-Find your serial port in WSL (typically /dev/ttyS#).
-Example: /dev/ttyS4 maps to COM5 in Windows.
+Python Scripts (used for initial serial setup):
+- SSHsetupSwitch.py  : Sets up a Cisco switch via serial. Adds VLAN 90, assigns IP,
+                        enables SSH, and saves config.
+- SSHsetupRuter.py   : Sets up a Cisco router via serial. Configures interface, domain,
+                        SSH, and user login.
 
-Edit the script:
+Ansible Playbooks (used after SSH is available):
+- SwitchSG1.yml      : Configures a Cisco switch via SSH: creates VLAN 10, assigns access
+                        ports, keeps VLAN 90 alive.
+- config ruter.yml   : Configures a Cisco router via SSH: sets interface IPs and configures
+                        a DHCP pool with exclusions.
 
-On line 19, change the serial_port value to match your port (e.g. /dev/ttyS4).
+System-Specific Changes You Must Make
+-------------------------------------
 
-On line 69, change the username and password in this command:
+1. Serial Port Adjustment:
+   - In both SSHsetupSwitch.py and SSHsetupRuter.py:
+     Edit line like this to match your COM port:
+       serial_port = '/dev/ttyS5'  → change to your actual port
 
-python
-Copy
-Edit
-send_command(ser, 'username cisco privilege 15 secret cisco', wait=2)
-Replace both cisco values with your desired SSH login credentials.
+2. Hostname and Interface Configuration:
+   - In SSHsetupRuter.py:
+     Line 39: change the hostname to match your device naming
+       send_command(ser, 'hostname SG1')
+     Line 40, 44, 51: set your actual VLAN ID
+       send_command(ser, 'vlan 90')
+     Line 45: your actual IP address/subnet for MGMT interface
+       send_command(ser, 'ip address 192.168.90.5 255.255.255.0')
+     Line 49: the physical port to put in VLAN 90
+     Line 55: set your network's correct default gateway
+     Line 85: set your preferred username and password
 
-Run the script:
+   - In SSHsetupSwitch.py:
+     Update lines as needed to match:
+       - Serial port
+       - VLAN ID, IP address
+       - Gateway
+       - SSH credentials
 
-bash
-Copy
-Edit
-sudo python3 setup_ssh.py
+3. Ansible Inventory Configuration:
+   Edit your `inventory.ini` or YAML inventory:
 
-✅ What the Script Does
-Enters privileged mode (enable)
+   [router]
+   RG1 ansible_host=<your-router-ip>
 
-Sets:
+   [switch]
+   SG1 ansible_host=<your-switch-ip>
 
-Hostname to RG1
+   [all:vars]
+   ansible_user=cisco
+   ansible_password=cisco
+   ansible_network_os=cisco.ios
+   ansible_connection=network_cli
+   ansible_become=true
+   ansible_become_method=enable
+   ansible_enable_password=cisco
 
-IP domain to test.local
+4. DHCP Variables (in config ruter.yml):
+   Under `vars:` → update these:
+     - pool_name
+     - network and netmask
+     - default_router
+     - dns_server
+     - excluded_ips (e.g. gateway and static devices)
 
-Handles RSA key generation and overwrites if needed
+5. VLAN Access Ports (in SwitchSG1.yml):
+   - Update the `access_ports:` list to match the physical interfaces you want to use.
 
-Creates a local SSH user
+Running Steps
+-------------
 
-Enables SSH version 2
+1. Connect via Serial and Run Python Script:
+   python3 SSHsetupSwitch.py
+   OR
+   python3 SSHsetupRuter.py
 
-Configures VTY lines for SSH login
+2. Verify SSH:
+   ssh cisco@192.168.X.X
 
-Saves the configuration (write memory)
+3. Run Playbooks:
+   ansible-playbook -i inventory.ini config\ ruter.yml
+   ansible-playbook -i inventory.ini SwitchSG1.yml
 
-💡 Tips
-The script works best on Cisco IOS-based routers (e.g. 4221, ISR-series).
+Troubleshooting
+---------------
 
-If you encounter a WinError 10060 or 10051 in earlier versions of the script, this version resolves it by using only the serial console to configure SSH — no Paramiko or IP is needed.
+- Permission Denied on Serial:
+    - Ensure no other program (e.g., Putty) is using the COM port.
+    - Try: sudo chmod 666 /dev/ttyS5 or configure /etc/wsl.conf for WSL.
+
+- SSH Timeout:
+    - Ensure SVI (e.g., Vlan90) is up/up with IP.
+    - At least one interface (e.g., Gig1/0/1) must be in the same VLAN and up.
 
