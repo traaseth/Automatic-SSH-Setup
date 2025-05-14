@@ -1,7 +1,0 @@
-# host_vars/SG2.yml
-
-# Eksempel: Definer trunk-porter eller VLANer du vil at SG1 skal ha.
-trunk_ports:
-  - name: FastEthernet0/1
-  - name: FastEthernet0/2
-  - name: FastEthernet0/3

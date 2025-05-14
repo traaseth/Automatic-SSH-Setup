@@ -1,8 +1,0 @@
-# host_vars/SG3.yml
-
-port_channel_id: 1
-port_channel_mode: active   # LACP i aktiv modus
-
-etherchannel_members:
-  - GigabitEthernet0/1
-  - GigabitEthernet0/2
