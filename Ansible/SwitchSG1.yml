@@ -1,0 +1,50 @@
+---
+- name: Configure VLAN and access ports on Cisco switch
+  hosts: SG1
+  gather_facts: no
+  become: true
+  become_method: enable
+  collections:
+    - cisco.ios
+
+
+  vars:
+    vlan_id: 10
+    vlan_name: USERS
+    access_ports:
+      - Gig1/0/2
+      - Gig1/0/3
+      - Gig1/0/4
+      - Gig1/0/5
+      - Gig1/0/6
+
+  tasks:
+    - name: Ensure VLAN 90 Stays alive on MGMT port
+      ios_config:
+        lines:
+          - switchport mode access
+          - switchport access vlan 90
+          - no shutdown
+          parents: interface Gig1/0/1
+
+    - name: Create VLAN {{ vlan_id }} with name {{ vlan_name }}
+      ios_config:
+        lines:
+          - name {{ vlan_name }}
+        parents: vlan {{ vlan_id }}
+      vars:
+        ansible_become: true
+        ansible_become_method: enable
+
+    - name: Configure access ports for VLAN {{ vlan_id }}
+      ios_config:
+        lines:
+          - switchport mode access
+          - switchport access vlan {{ vlan_id }}
+          - spanning-tree portfast
+          - no shutdown
+        parents: interface {{ item }}
+      loop: "{{ access_ports }}"
+      vars:
+        ansible_become: true
+        ansible_become_method: enable
